@@ -1,0 +1,99 @@
+# ===== Android / Kotlin / Gradle =====
+## Build output
+*.apk
+*.aab
+*.ap_
+*.dex
+build/
+.cxx/
+
+## Gradle
+.gradle/
+local.properties
+
+## Android Studio / IntelliJ
+*.iml
+.idea/
+.navigation/
+captures/
+
+## Kotlin
+.kotlin/
+
+## ProGuard / R8
+mapping.txt
+proguard-mapping.txt
+
+## Lint / test reports
+lint-results*/
+test-results/
+reports/
+
+## Heap dumps
+*.hprof
+
+## 서명/시크릿 — 절대 커밋 금지
+*.jks
+*.keystore
+keystore.properties
+google-services.json
+play-service-account*.json
+
+## Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+
+# ===== Secrets / Env =====
+.env
+.env.*
+!.env.example
+*.local
+*.pem
+*.key
+secrets.*
+.secrets/
+
+# ===== Logs / Temp =====
+*.log
+logs/
+tmp/
+.tmp/
+*.pid
+test/**/logs/
+
+# ===== Editor =====
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.shared.json
+*.swp
+*.swo
+*~
+
+# ===== macOS =====
+.DS_Store
+.DS_Store?
+._*
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
+Icon?
+
+# ===== Windows =====
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# ===== Linux =====
+.directory
+.Trash-*
+.nfs*
+.fuse_hidden*
+
+# ===== Misc =====
+.omc/
