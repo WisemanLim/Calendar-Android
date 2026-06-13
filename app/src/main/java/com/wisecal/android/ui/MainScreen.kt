@@ -53,7 +53,13 @@ fun MainScreen(
     val today = LocalDate.now()
     var heroDrag by remember { mutableFloatStateOf(0f) }
 
-    Column(modifier = modifier.fillMaxSize()) {
+    // 엣지투엣지(enableEdgeToEdge) 대응: 시스템 바(상단 상태바 / 하단 제스처바) 영역만큼
+    // 안전 패딩을 적용해 설정 버튼·하단 미니달력이 시스템 UI에 가려지지 않도록 방어.
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.safeDrawing),
+    ) {
 
         // ── 유틸리티 바 ───────────────────────────────────────────
         Row(
@@ -225,15 +231,21 @@ private fun HeroArea(
         tonalElevation = 1.dp,
         shadowElevation = 2.dp,
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            // 방어 코드: Hero 카드에 실제로 주어진 가용 크기에 맞춰 날짜 숫자 크기를 동적 조정.
+            // 작은 화면/짧은 세로 공간에서 180sp 고정값이 레이아웃을 밀어내는 것을 방지.
+            // min(가로,세로) 기준 비율 → 72~180sp 범위로 클램프.
+            val dateFontSize = (minOf(maxWidth, maxHeight).value * 0.55f)
+                .coerceIn(72f, 180f).sp
+
             // 날짜 숫자 워터마크 — 항상 연한 회색 (iOS와 동일)
             Text(
                 text = state.selectedDate.dayOfMonth.toString(),
-                fontSize = 180.sp,
+                fontSize = dateFontSize,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f),
                 modifier = Modifier.align(Alignment.Center),
-                lineHeight = 180.sp,
+                lineHeight = dateFontSize,
             )
 
             // 전경 레이아웃

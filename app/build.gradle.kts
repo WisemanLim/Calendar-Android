@@ -1,8 +1,16 @@
+import java.util.Properties
+
 // WiseCalA — app module (빌드 플레이버 = 환경 매핑)
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
+}
+
+// local.properties 에서 릴리스 키스토어 정보 로드 (없으면 debug 키로 폴백 → 설치 가능)
+val keystoreProps = Properties()
+rootProject.file("local.properties").let { f ->
+    if (f.exists()) f.inputStream().use { keystoreProps.load(it) }
 }
 
 android {
@@ -13,7 +21,7 @@ android {
         applicationId = "com.wisecal.android"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
+        versionCode = 3
         versionName = "0.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -37,10 +45,32 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            val storeFilePath = keystoreProps.getProperty("RELEASE_STORE_FILE")
+            if (storeFilePath != null) {
+                storeFile = file(storeFilePath)
+                storePassword = keystoreProps.getProperty("RELEASE_STORE_PASSWORD")
+                keyAlias = keystoreProps.getProperty("RELEASE_KEY_ALIAS")
+                keyPassword = keystoreProps.getProperty("RELEASE_KEY_PASSWORD")
+            } else {
+                // 릴리스 키 미설정 시 debug 키로 폴백 (사이드로드/테스트용, Play 스토어 배포 불가)
+                val debugKeystore = file("${System.getProperty("user.home")}/.android/debug.keystore")
+                if (debugKeystore.exists()) {
+                    storeFile = debugKeystore
+                    storePassword = "android"
+                    keyAlias = "androiddebugkey"
+                    keyPassword = "android"
+                }
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 
