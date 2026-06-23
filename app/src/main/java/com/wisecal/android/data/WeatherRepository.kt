@@ -17,14 +17,26 @@ class OpenMeteoWeatherRepository(
     private val forecastService: WeatherForecastService,
 ) : WeatherRepository {
 
-    override suspend fun getWeather(latitude: Double, longitude: Double): WeatherInfo? =
-        runCatching {
+    // (data, fetchedAtMs) — 각각 독립 TTL
+    private var cachedCurrent: Pair<WeatherInfo, Long>? = null
+    private var cachedWeekly:  Pair<Map<LocalDate, WeatherInfo>, Long>? = null
+    private val cacheTtlMs = 30 * 60 * 1000L  // 30분
+
+    override suspend fun getWeather(latitude: Double, longitude: Double): WeatherInfo? {
+        cachedCurrent?.let { (data, ts) ->
+            if (System.currentTimeMillis() - ts < cacheTtlMs) return data
+        }
+        return runCatching {
             val dto = service.getCurrentWeather(latitude, longitude)
             WeatherInfo(dto.current.temperatureCelsius, dto.current.weatherCode)
-        }.getOrNull()
+        }.getOrNull()?.also { cachedCurrent = it to System.currentTimeMillis() }
+    }
 
-    override suspend fun getWeeklyForecast(latitude: Double, longitude: Double): Map<LocalDate, WeatherInfo> =
-        runCatching {
+    override suspend fun getWeeklyForecast(latitude: Double, longitude: Double): Map<LocalDate, WeatherInfo> {
+        cachedWeekly?.let { (data, ts) ->
+            if (System.currentTimeMillis() - ts < cacheTtlMs) return data
+        }
+        return runCatching {
             val dto = forecastService.getDailyForecast(latitude, longitude)
             dto.daily.time.mapIndexedNotNull { i, dateStr ->
                 runCatching {
@@ -34,7 +46,10 @@ class OpenMeteoWeatherRepository(
                     date to WeatherInfo(temp, code)
                 }.getOrNull()
             }.toMap()
-        }.getOrElse { emptyMap() }
+        }.getOrElse { emptyMap() }.also { map ->
+            if (map.isNotEmpty()) cachedWeekly = map to System.currentTimeMillis()
+        }
+    }
 
     companion object {
         private const val BASE_URL = "https://api.open-meteo.com/"

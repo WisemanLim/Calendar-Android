@@ -14,6 +14,7 @@ coil = "2.7.0"
 junit = "4.13.2"
 androidxTestExt = "1.2.1"
 appcompat = "1.7.0"
+material  = "1.12.0"
 
 [libraries]
 compose-bom                 = { group = "androidx.compose", name = "compose-bom",              version.ref = "composeBom" }
@@ -33,6 +34,7 @@ okhttp-logging              = { group = "com.squareup.okhttp3", name = "logging-
 play-services-location      = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 coil-compose                = { group = "io.coil-kt", name = "coil-compose",                   version.ref = "coil" }
 appcompat                   = { group = "androidx.appcompat", name = "appcompat",             version.ref = "appcompat" }
+material                    = { group = "com.google.android.material", name = "material",       version.ref = "material" }
 junit                       = { group = "junit", name = "junit",                               version.ref = "junit" }
 androidx-test-ext           = { group = "androidx.test.ext", name = "junit",                  version.ref = "androidxTestExt" }
 

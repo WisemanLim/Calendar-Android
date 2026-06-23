@@ -21,7 +21,7 @@ android {
         applicationId = "com.wisecal.android"
         minSdk = 26
         targetSdk = 35
-        versionCode = 3
+        versionCode = 5
         versionName = "0.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -104,6 +104,7 @@ dependencies {
     implementation(libs.lifecycle.runtime.ktx)
     implementation(libs.navigation.compose)
     implementation(libs.appcompat)
+    implementation(libs.material)
     implementation(libs.datastore.preferences)
 
     // 날씨 API (Open-Meteo)

@@ -73,9 +73,15 @@ class CalendarViewModel(
         viewModelScope.launch(ioDispatcher) {
             val currentAsync = async { weatherRepo.getWeather(latitude, longitude) }
             val weeklyAsync  = async { weatherRepo.getWeeklyForecast(latitude, longitude) }
-            val current = currentAsync.await()
-            val weekly  = weeklyAsync.await()
-            _uiState.update { it.copy(weather = current, weekWeatherMap = weekly) }
+            val newCurrent = currentAsync.await()
+            val newWeekly  = weeklyAsync.await()
+            // 캐시 히트 시 즉시 반환된 값을 적용; fetch 실패 시 기존 상태 유지.
+            _uiState.update { state ->
+                state.copy(
+                    weather        = newCurrent ?: state.weather,
+                    weekWeatherMap = newWeekly.ifEmpty { state.weekWeatherMap },
+                )
+            }
         }
     }
 

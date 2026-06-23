@@ -1,14 +1,17 @@
 package com.wisecal.android.ui.editor
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wisecal.android.data.CalendarRepository
+import com.wisecal.android.data.EventImageStore
 import com.wisecal.android.logic.PlannerLogic
 import com.wisecal.android.model.CalendarEvent
 import com.wisecal.android.model.PlannerMode
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,6 +30,7 @@ sealed interface EditorResult {
 class EventEditorViewModel(
     private val calendarRepo: CalendarRepository,
     private val onSaved: () -> Unit,
+    private val appContext: Context,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : ViewModel() {
 
@@ -60,6 +64,7 @@ class EventEditorViewModel(
             endTime        = event.endTime,
             dueDateTime    = event.startTime,
             location       = event.location ?: "",
+            memo           = if (mode == PlannerMode.PERSONAL_EVENT) event.notes ?: "" else "",
             isEditMode     = true,
             editingEventId = event.id,
         )
@@ -87,7 +92,7 @@ class EventEditorViewModel(
                         location  = s.location.ifBlank { null },
                     )
                 } else {
-                    calendarRepo.addEvent(
+                    val eventId = calendarRepo.addEvent(
                         title      = s.resolvedTitle,
                         notes      = s.resolvedNotes,
                         startTime  = startTime,
@@ -97,9 +102,16 @@ class EventEditorViewModel(
                         calendarId = calendarId,
                         rrule      = s.rrule,
                     )
+                    if (eventId != null && s.photoUri != null) {
+                        val ts = System.currentTimeMillis()
+                        val dest = EventImageStore.file(appContext.filesDir, eventId, ts)
+                        appContext.contentResolver.openInputStream(s.photoUri)?.use { input ->
+                            dest.outputStream().use { output -> input.copyTo(output) }
+                        }
+                    }
                 }
             }.onSuccess {
-                onSaved()
+                withContext(Dispatchers.Main) { onSaved() }
                 _result.emit(EditorResult.Success)
             }.onFailure { e ->
                 _result.emit(EditorResult.Error(e.message ?: "저장 실패"))
@@ -133,7 +145,7 @@ class EventEditorViewModel(
                 calendarId = calendarId,
                 rrule      = null,
             )
-            onSaved()
+            withContext(Dispatchers.Main) { onSaved() }
         }
     }
 }

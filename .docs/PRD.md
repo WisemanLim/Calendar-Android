@@ -32,7 +32,7 @@ Android 기기의 시스템 캘린더(Google Calendar 포함)를 읽고 쓰는 �
 | SwiftUI | Jetpack Compose |
 | EventKit (EKEvent) | Android CalendarProvider (ContentResolver) |
 | UserDefaults | DataStore Preferences (또는 SharedPreferences) |
-| WeatherKit + Open-Meteo | Open-Meteo API 전용 (WeatherKit 없음) |
+| WeatherKit + Open-Meteo | Open-Meteo API 전용 (WeatherKit 없음). WMO 코드 → iOS WeatherCondition 기준 이모지 매핑: 코드 1→☀️(clear), 2→⛅(partlyCloudy), else→☀️(iOS default) |
 | UNUserNotificationCenter | NotificationManager + AlarmManager / WorkManager |
 | PhotosPicker | Android Photo Picker (`ActivityResultContracts.PickVisualMedia`) |
 | UIImagePickerController (카메라) | `ActivityResultContracts.TakePicture` (CameraX 선택적) |
@@ -64,9 +64,9 @@ Android 기기의 시스템 캘린더(Google Calendar 포함)를 읽고 쓰는 �
   - 주의: `EventCountColor.forCount(0) = Color.Transparent` 을 워터마크에 사용하면 이벤트 0개일 때 히어로가 공백으로 보임 → 항상 고정 alpha 사용
 - 왼쪽/오른쪽 스와이프 → 전일/익일 이동 (1/4 화면 임계값)
 - 더블탭 / 롱프레스 → 이벤트 추가 에디터
-- 좌상단: 음력 날짜 (회색, 작은 폰트)
+- 음력+날씨 단일 Row: 음력 날짜 좌측(회색, 작은 폰트) / 날씨 이모지+온도 우측 (기존 별도 Row 통합)
 - SCHEDULE 리스트: 해당일 이벤트 목록. overdue 항목 빨간색.
-- 이벤트 아이템 롱프레스 ContextMenu: 편집 / 복사(내용포함) / 복사(내용제외) / 삭제
+- 이벤트 아이템 롱프레스 ContextMenu: 복사(내용포함) / 복사(내용제외) / 삭제 (편집은 이벤트 탭 진입으로 대체)
 
 **하단 미니 달력 (MonthGrid ×2)**
 - 현재월 + 다음월 나란히 표시. Surface 카드(RoundedCornerShape 16dp)로 래핑.
@@ -131,15 +131,20 @@ eventCountColor(n):
 - 카테고리 선택(Segmented: 복용 / 약속 / 고정) → 템플릿 목록 → 시간 설정
 
   **medication(복용)**
-  - 아침(7시)/점심(12시)/저녁(18시) 프리셋 버튼 + 직접 TimePicker
+  - 프리셋 칩: 아침(7시) / 점심(12시) / 저녁(18시) / 직접 — 선택 시 해당 시각 자동 세팅
+  - 직접 선택 시 TimePicker 다이얼로그 표시
+  - `MedicationPreset` enum(아침/점심/저녁/직접), `EventEditorState.medicationPreset` 필드
   - "기본 시간으로 저장" — DataStore 내 템플릿 `defaultStartHour` 갱신
   - 반복 토글 + 시작/종료일 DatePicker → yearly RRULE
-  - 사진 첨부: Android Photo Picker (갤러리) + Camera Intent (카메라)
-    → 앱 내부 저장소(filesDir) JPEG 저장 (EventImageStore 대응)
+  - 사진 섹션: 갤러리 버튼(`ActivityResultContracts.PickVisualMedia`) + 카메라 버튼(`ActivityResultContracts.TakePicture`)
+    → 카메라 임시파일 `cacheDir` 저장 → 최종 저장 시 `filesDir` JPEG 복사
+    → `EventEditorState.photoUri: Uri?` 필드로 상태 관리, `EventEditorViewModel`에서 저장 처리
+    → FileProvider(`${applicationId}.fileprovider`) AndroidManifest 등록 필수
 
   **appointment(약속)**
   - 시작/종료 TimePicker 각각
   - 장소 TextField (선택) → CalendarContract.Events.EVENT_LOCATION
+  - 반복일정(RRULE) 없음 — 반복 UI 미표시
 
   **fixed(고정)**
   - 시작/종료 TimePicker
@@ -159,7 +164,7 @@ eventCountColor(n):
 | `dd-mm-yyyy` | `08-03-2026` |
 | `d###` | `067` (연중 일련일 3자리) |
 
-날짜 패턴 없는 복용/약속 카테고리 → 저장 시 auto yearly RRULE 적용.
+날짜 패턴 없는 복용(medication) 카테고리 → 저장 시 auto yearly RRULE 적용. 약속(appointment)은 RRULE 미적용.
 
 ### 3.6 템플릿 (EventTemplate)
 
@@ -252,8 +257,8 @@ iOS `CalendarLogic` / `PlannerLogic` 대응:
 | 온보딩 | 최초 실행/DEBUG 매회 노출, 완료 후 미노출(릴리스) |
 | diary 시간 | 에디터 오픈=startDate, 저장=endDate 자동 기록 |
 | todo 기한 | due-date DateTimePicker 필수, 기한 초과 빨간색 표시 |
-| medication 시간 | 아침/점심/저녁 프리셋 + 직접 입력, 기본값 템플릿 저장 |
-| appointment 시간+장소 | TimePicker×2 + 장소 TextField → CalendarContract.EVENT_LOCATION |
+| medication 시간 | 아침/점심/저녁/직접 프리셋 칩 + TimePicker 다이얼로그, 사진 첨부(갤러리+카메라), 기본값 템플릿 저장 |
+| appointment 시간+장소 | TimePicker×2 + 장소 TextField → CalendarContract.EVENT_LOCATION (반복 없음) |
 | fixed 반복 | 시작·종료 시간, 반복 토글 + 기간 DatePicker, yearly RRULE |
 | 이벤트 색상 | 무지개 7단계 미니달력+히어로 동시 적용 |
 | 이벤트 복사 | ContextMenu → BottomSheet → 저장 |
@@ -271,7 +276,7 @@ iOS `CalendarLogic` / `PlannerLogic` 대응:
 | 날씨 | WeatherKit + Open-Meteo 폴백 | Open-Meteo 전용 | WeatherKit은 Apple 전용 |
 | 캘린더 쓰기 | EKEventStore | CalendarProvider ContentResolver | Intent로도 가능 (앱 없으면 fallback) |
 | 반복이벤트 | EKRecurrenceRule 객체 | RRULE 문자열 (`FREQ=YEARLY;INTERVAL=1`) | RFC 5545 호환 |
-| 사진 저장 | EventImageStore (앱 Documents) | `filesDir` JPEG (외부 저장소 미사용) | 앱 삭제 시 소멸 |
+| 사진 저장 | EventImageStore (앱 Documents) | `filesDir` JPEG (외부 저장소 미사용). FileProvider(`${applicationId}.fileprovider`) 등록, 카메라 임시파일 `cacheDir` 경유 | 앱 삭제 시 소멸. FileProvider 미등록 시 카메라 `TakePicture` 크래시 |
 | 음력 | `Calendar(identifier: .chinese)` | `ULocale("ko_KR@calendar=chinese")` | ICU4J 기반 |
 | SF Symbols | 내장 | Material Icons Extended 대체 | 1:1 매핑 필요 |
 | 정확한 알람 | 제약 없음 | Android 12+ `SCHEDULE_EXACT_ALARM` 권한 필요 | |

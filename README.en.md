@@ -88,6 +88,8 @@ Wise-Calendar-A/
 │   │   ├── main/
 │   │   │   ├── java/com/wisecal/android/   # Kotlin sources
 │   │   │   ├── res/                         # resources
+│   │   │   │   └── xml/
+│   │   │   │       └── file_paths.xml       # FileProvider paths config
 │   │   │   └── AndroidManifest.xml
 │   │   ├── test/                            # unit tests
 │   │   └── androidTest/                     # instrumentation tests
@@ -171,6 +173,7 @@ echo "android.useAndroidX=true" >> gradle.properties
 | impl/11 | EventImageStore (photo file-name rules) · MonthGridState (current+next month · nav bounds) | DONE | 26/26 PASS |
 | impl/12 | AppVersionState (onboarding show condition) · YearNavigationState (year nav · leap-year edge) | DONE | 24/24 PASS |
 | impl/13 | iOS design alignment: onboarding white redesign · hero watermark fix · WeekStrip SUN/SAT colors · MonthGrid card wrap · tab-switch fix · repeat period DatePickerDialog | DONE | — |
+| impl/14 | iOS sync: appointment repeat removed · medication TimePicker+photo · lunar+weather unified line · long-press edit removed · weather emoji iOS-aligned | DONE | — |
 
 ## Architecture
 
@@ -197,7 +200,7 @@ app/src/main/java/com/wisecal/android/
 ├── ui/
 │   ├── CalendarUiState.kt     # UI state (eventsForSelectedDate · monthGrid derived)
 │   ├── CalendarViewModel.kt   # StateFlow ViewModel
-│   ├── MainScreen.kt          # Root composable (Hero + WeekStrip + MonthGrid + list)
+│   ├── MainScreen.kt          # Root composable (Hero + WeekStrip + MonthGrid + list) · schedule list: lunar date + weather (emoji+temperature) in single Row · long-press ContextMenu: copy·delete only (edit removed)
 │   ├── theme/
 │   │   └── WiseCalColors.kt   # Rainbow event count colors (7 levels)
 │   ├── components/
@@ -205,12 +208,12 @@ app/src/main/java/com/wisecal/android/
 │   │   ├── WeekStrip.kt       # 7-day week strip
 │   │   └── MonthGrid.kt       # 6×7 month grid
 │   ├── editor/
-│   │   ├── EventEditorState.kt   # Editor state (canSave · resolvedTitle · rrule)
+│   │   ├── EventEditorState.kt   # Editor state (canSave · resolvedTitle · rrule) · MedicationPreset enum (morning/lunch/evening/custom) · medicationPreset · photoUri: Uri?
 │   │   ├── EventEditorViewModel.kt
-│   │   ├── EventEditorScreen.kt
+│   │   ├── EventEditorScreen.kt  # gallery/camera ActivityResultContracts launchers + FileProvider temp URI
 │   │   ├── DiaryEditorSection.kt
 │   │   ├── TodoEditorSection.kt
-│   │   └── PersonalEventEditorSection.kt
+│   │   └── PersonalEventEditorSection.kt  # medication TimePicker dialog + photo section (gallery·camera)
 │   ├── onboarding/
 │   │   ├── OnboardingState.kt    # 4-step state (canProceed · nextStep · isLastStep)
 │   │   ├── AppVersionState.kt    # Onboarding show condition (debug · not-completed · version-mismatch)

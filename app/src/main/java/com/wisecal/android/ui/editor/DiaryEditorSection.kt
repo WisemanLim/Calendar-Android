@@ -32,10 +32,9 @@ fun DiaryEditorSection(
             value = state.diaryBody,
             onValueChange = onBodyChange,
             label = { Text("일기 본문") },
-            minLines = 6,
             modifier = Modifier
-                .fillMaxWidth()
-                .defaultMinSize(minHeight = 160.dp),
+                .weight(1f)
+                .fillMaxWidth(),
         )
     }
 }

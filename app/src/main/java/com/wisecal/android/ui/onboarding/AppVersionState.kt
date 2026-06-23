@@ -12,7 +12,9 @@ data class AppVersionState(
 ) {
     /** true → 온보딩 표시 */
     val shouldShowOnboarding: Boolean
-        get() = isDebugBuild || !onboardingCompleted || lastSeenVersion != currentVersionName
+        /** 디버그 모드 스킵 **/
+//         get() = isDebugBuild || !onboardingCompleted || lastSeenVersion != currentVersionName
+        get() = !onboardingCompleted || lastSeenVersion != currentVersionName
 
     /** 온보딩 완료 후 저장할 버전 */
     val versionToSave: String get() = currentVersionName

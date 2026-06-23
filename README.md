@@ -122,6 +122,7 @@ Wise-Calendar-A/
 │   │   ├── main/
 │   │   │   ├── java/com/wisecal/android/   # Kotlin 소스
 │   │   │   ├── res/                         # 리소스
+│   │   │   │   └── xml/file_paths.xml       # FileProvider 경로 설정
 │   │   │   └── AndroidManifest.xml
 │   │   ├── test/                            # 단위 테스트
 │   │   └── androidTest/                     # 인스트루멘테이션 테스트
@@ -206,6 +207,7 @@ echo "android.useAndroidX=true" >> gradle.properties
 | impl/11 | EventImageStore(사진파일명 규칙) · MonthGridState(현재+다음월·이동경계) | DONE | 26/26 PASS |
 | impl/12 | AppVersionState(온보딩노출조건) · YearNavigationState(연도이동·윤년경계) | DONE | 24/24 PASS |
 | impl/13 | iOS 디자인 일치: 온보딩 화이트 리디자인 · 히어로 워터마크 수정 · WeekStrip SUN/SAT 색상 · MonthGrid 카드 래핑 · 탭 전환 수정 · 반복 기간 DatePickerDialog | DONE | — |
+| impl/14 | iOS 동기화: 약속 반복 제거 · 복용 TimePicker+사진 · 음력+날씨 통합 라인 · 롱프레스 편집 제거 · 날씨 이모지 iOS 동기화 | DONE | — |
 
 ## 아키텍처
 
@@ -232,7 +234,7 @@ app/src/main/java/com/wisecal/android/
 ├── ui/
 │   ├── CalendarUiState.kt     # UI 상태 (eventsForSelectedDate · monthGrid 파생)
 │   ├── CalendarViewModel.kt   # StateFlow ViewModel
-│   ├── MainScreen.kt          # 루트 컴포저블 (Hero + WeekStrip + MonthGrid + 목록)
+│   ├── MainScreen.kt          # 루트 컴포저블 (Hero + WeekStrip + MonthGrid + 목록); 일정 목록: 음력+날씨(이모지+온도) 단일 Row 표시; 롱프레스 ContextMenu: 복사·삭제만
 │   ├── theme/
 │   │   └── WiseCalColors.kt   # 레인보우 이벤트 수 색상 (7단계)
 │   ├── components/
@@ -240,12 +242,12 @@ app/src/main/java/com/wisecal/android/
 │   │   ├── WeekStrip.kt       # 주간 스트립 7칸
 │   │   └── MonthGrid.kt       # 6×7 월 그리드
 │   ├── editor/
-│   │   ├── EventEditorState.kt   # 에디터 상태 (canSave · resolvedTitle · rrule)
+│   │   ├── EventEditorState.kt   # 에디터 상태 (canSave · resolvedTitle · rrule) + MedicationPreset enum(아침/점심/저녁/직접) · medicationPreset · photoUri: Uri? 필드
 │   │   ├── EventEditorViewModel.kt
-│   │   ├── EventEditorScreen.kt
+│   │   ├── EventEditorScreen.kt  # 갤러리/카메라 ActivityResultContracts 런처 + FileProvider 임시 URI
 │   │   ├── DiaryEditorSection.kt
 │   │   ├── TodoEditorSection.kt
-│   │   └── PersonalEventEditorSection.kt
+│   │   └── PersonalEventEditorSection.kt  # 복용 TimePicker 다이얼로그 + 사진 섹션(갤러리·카메라)
 │   ├── onboarding/
 │   │   ├── OnboardingState.kt    # 4단계 상태 (canProceed · nextStep · isLastStep)
 │   │   ├── AppVersionState.kt    # 온보딩 노출 조건 (debug · 미완료 · 버전불일치)

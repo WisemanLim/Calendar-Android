@@ -11,16 +11,17 @@ data class WeatherInfo(
 ) {
     val iconEmoji: String
         get() = when (weatherCode) {
-            0            -> "☀️"
-            1, 2         -> "🌤️"
-            3            -> "☁️"
-            45, 48       -> "🌫️"
-            in 51..55    -> "🌦️"
-            in 61..65    -> "🌧️"
-            in 71..77    -> "❄️"
-            in 80..82    -> "🌧️"
-            95, 96, 99   -> "⛈️"
-            else         -> "🌡️"
+            0, 1                   -> "☀️"   // clear
+            2                      -> "⛅"   // partlyCloudy
+            3                      -> "☁️"  // overcast
+            45, 48                 -> "🌫️"  // fog
+            51, 53, 55, 56, 57     -> "🌦️"  // drizzle
+            61, 63, 65, 66, 67,
+            80, 81, 82             -> "🌧️"  // rain / heavyRain
+            71, 73, 75, 77,
+            85, 86                 -> "❄️"  // snow
+            95, 96, 99             -> "⛈️"  // thunderstorm
+            else                   -> "☀️"  // clear (iOS default)
         }
 
     val description: String

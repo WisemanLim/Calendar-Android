@@ -6,6 +6,9 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -16,6 +19,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.wisecal.android.BuildConfig
 import com.wisecal.android.data.AppSettings
+import com.wisecal.android.logic.PlannerLogic
 import com.wisecal.android.data.CalendarRepository
 import com.wisecal.android.data.TemplateStore
 import com.wisecal.android.data.WeatherRepository
@@ -54,6 +58,7 @@ fun WiseCalNavGraph(
 ) {
     val navController = rememberNavController()
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current.applicationContext
     val templates by templateStore.templates.collectAsState(initial = emptyList())
 
     val onboardingCompleted by appSettings.onboardingCompleted.collectAsState(initial = null)
@@ -76,9 +81,10 @@ fun WiseCalNavGraph(
     val startDest = if (versionState.shouldShowOnboarding) NavRoute.Onboarding.route
                     else NavRoute.Main.route
 
-    // 이벤트 복사 오버레이 상태
+    // 이벤트 복사/편집 오버레이 상태
     var copyTarget by remember { mutableStateOf<CalendarEvent?>(null) }
     var copyDate   by remember { mutableStateOf(LocalDate.now()) }
+    var editTarget by remember { mutableStateOf<CalendarEvent?>(null) }
 
     NavHost(
         navController    = navController,
@@ -87,7 +93,7 @@ fun WiseCalNavGraph(
     ) {
 
         // ── 메인 ────────────────────────────────────────────────────
-        composable(NavRoute.Main.route) {
+        composable(NavRoute.Main.route) { backStackEntry ->
             val vm: CalendarViewModel = viewModel(
                 factory = object : ViewModelProvider.Factory {
                     @Suppress("UNCHECKED_CAST")
@@ -95,6 +101,19 @@ fun WiseCalNavGraph(
                         CalendarViewModel(calendarRepo, appSettings, weatherRepo) as T
                 }
             )
+            // 하위 화면(편집/설정/검색)에서 돌아올 때 이벤트 목록 갱신.
+            // 최초 진입(isFirstResume)은 init에서 이미 loadMonth를 호출하므로 건너뜀.
+            var isFirstResume by remember { mutableStateOf(true) }
+            DisposableEffect(backStackEntry) {
+                val observer = LifecycleEventObserver { _, event ->
+                    if (event == Lifecycle.Event.ON_RESUME) {
+                        if (isFirstResume) isFirstResume = false
+                        else vm.refresh()
+                    }
+                }
+                backStackEntry.lifecycle.addObserver(observer)
+                onDispose { backStackEntry.lifecycle.removeObserver(observer) }
+            }
             MainScreen(
                 viewModel            = vm,
                 onNavigateToSearch   = { navController.navigate(NavRoute.Search.route) },
@@ -103,6 +122,10 @@ fun WiseCalNavGraph(
                 onCopyEvent          = { event ->
                     copyTarget = event
                     copyDate   = event.startTime.toLocalDate()
+                },
+                onEditEvent          = { event ->
+                    editTarget = event
+                    navController.navigate(NavRoute.Editor.build(event.date))
                 },
             )
         }
@@ -175,16 +198,26 @@ fun WiseCalNavGraph(
                     override fun <T : ViewModel> create(c: Class<T>): T =
                         EventEditorViewModel(
                             calendarRepo = calendarRepo,
-                            onSaved = { navController.popBackStack() },
+                            onSaved = { editTarget = null },
+                            appContext = context,
                         ) as T
                 }
             )
-            LaunchedEffect(date, plannerMode) { vm.initNew(plannerMode, date) }
+            // 컴포저블 스코프에서 직접 읽어 snapshot 타이밍 문제 방지.
+            // editTarget = event → navigate 가 같은 프레임에 커밋되므로
+            // 최초 컴포지션 시점에 event 값을 안정적으로 캡처.
+            val capturedEditTarget = editTarget
+            LaunchedEffect(capturedEditTarget, plannerMode) {
+                if (capturedEditTarget != null)
+                    vm.initEdit(PlannerLogic.inferMode(capturedEditTarget), capturedEditTarget)
+                else
+                    vm.initNew(plannerMode, date)
+            }
             EventEditorScreen(
                 viewModel         = vm,
                 templates         = templates,
                 defaultCalendarId = 0L,
-                onDismiss         = { navController.popBackStack() },
+                onDismiss         = { editTarget = null; navController.popBackStack() },
             )
         }
     }

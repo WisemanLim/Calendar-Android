@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Adaptive icon foreground — 108dp × 108dp canvas.
+  Safe zone: center 72dp (coords 18–90). All content kept within 26–82.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Calendar body (white rounded rect) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M26,36 C26,32.7 28.7,30 32,30 L76,30 C79.3,30 82,32.7 82,36 L82,80 C82,83.3 79.3,86 76,86 L32,86 C28.7,86 26,83.3 26,80 Z" />
+
+    <!-- Header bar (darker blue) -->
+    <path
+        android:fillColor="#1565C0"
+        android:pathData="M26,36 C26,32.7 28.7,30 32,30 L76,30 C79.3,30 82,32.7 82,36 L82,50 L26,50 Z" />
+
+    <!-- Ring left -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M40,24 C40,22.3 41.3,21 43,21 C44.7,21 46,22.3 46,24 L46,36 C46,37.7 44.7,39 43,39 C41.3,39 40,37.7 40,36 Z" />
+
+    <!-- Ring right -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M62,24 C62,22.3 63.3,21 65,21 C66.7,21 68,22.3 68,24 L68,36 C68,37.7 66.7,39 65,39 C63.3,39 62,37.7 62,36 Z" />
+
+    <!-- Day dots row 1 -->
+    <path android:fillColor="#90CAF9"
+        android:pathData="M41,54 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+    <path android:fillColor="#90CAF9"
+        android:pathData="M54,54 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+    <path android:fillColor="#90CAF9"
+        android:pathData="M67,54 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+
+    <!-- Day dots row 2 -->
+    <path android:fillColor="#90CAF9"
+        android:pathData="M41,66 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+    <path android:fillColor="#90CAF9"
+        android:pathData="M54,66 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+
+    <!-- Today dot (red highlight) -->
+    <path android:fillColor="#EF5350"
+        android:pathData="M67,66 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+
+    <!-- Day dots row 3 -->
+    <path android:fillColor="#90CAF9"
+        android:pathData="M41,78 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+    <path android:fillColor="#90CAF9"
+        android:pathData="M54,78 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+
+</vector>

@@ -18,7 +18,7 @@ data class OnboardingState(
     val currentStep: OnboardingStep = OnboardingStep.WELCOME,
     val calendarPermissionGranted: Boolean = false,
     val notificationPermissionGranted: Boolean = false,
-    val selectedPlannerMode: PlannerMode? = null,
+    val selectedPlannerMode: PlannerMode? = PlannerMode.PERSONAL_EVENT,
 ) {
     val canProceed: Boolean
         get() = when (currentStep) {

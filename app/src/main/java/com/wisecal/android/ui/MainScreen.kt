@@ -1,5 +1,9 @@
 package com.wisecal.android.ui
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -19,10 +23,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
+import com.google.android.gms.location.LocationServices
 import com.wisecal.android.logic.LunarDateHelper
 import com.wisecal.android.logic.OverdueChecker
 import com.wisecal.android.model.CalendarEvent
@@ -47,11 +54,45 @@ fun MainScreen(
     onNavigateToSettings: () -> Unit = {},
     onAddEvent: (LocalDate) -> Unit = {},
     onCopyEvent: (CalendarEvent) -> Unit = {},
+    onEditEvent: (CalendarEvent) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val state by viewModel.uiState.collectAsState()
     val today = LocalDate.now()
     var heroDrag by remember { mutableFloatStateOf(0f) }
+
+    // 위치 권한 → 날씨 로드
+    val context = LocalContext.current
+    val locationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            try {
+                locationClient.lastLocation.addOnSuccessListener { loc ->
+                    viewModel.loadWeather(loc?.latitude ?: 37.5665, loc?.longitude ?: 126.9780)
+                }
+            } catch (_: SecurityException) {
+                viewModel.loadWeather(37.5665, 126.9780)
+            }
+        } else {
+            viewModel.loadWeather(37.5665, 126.9780)
+        }
+    }
+    LaunchedEffect(Unit) {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            try {
+                locationClient.lastLocation.addOnSuccessListener { loc ->
+                    viewModel.loadWeather(loc?.latitude ?: 37.5665, loc?.longitude ?: 126.9780)
+                }
+            } catch (_: SecurityException) {
+                viewModel.loadWeather(37.5665, 126.9780)
+            }
+        } else {
+            locationPermissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+        }
+    }
 
     // 엣지투엣지(enableEdgeToEdge) 대응: 시스템 바(상단 상태바 / 하단 제스처바) 영역만큼
     // 안전 패딩을 적용해 설정 버튼·하단 미니달력이 시스템 UI에 가려지지 않도록 방어.
@@ -72,7 +113,7 @@ fun MainScreen(
                 Icon(Icons.Default.Settings, contentDescription = "설정")
             }
             Spacer(modifier = Modifier.weight(1f))
-            if (state.selectedDate != today) {
+            if (state.selectedDate != today || state.currentMonth != java.time.YearMonth.from(today)) {
                 TextButton(
                     onClick = { viewModel.selectDate(today) },
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
@@ -157,6 +198,7 @@ fun MainScreen(
             state = state,
             onAddEvent = { onAddEvent(state.selectedDate) },
             onCopyEvent = onCopyEvent,
+            onEditEvent = onEditEvent,
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
@@ -217,6 +259,7 @@ private fun HeroArea(
     state: CalendarUiState,
     onAddEvent: () -> Unit,
     onCopyEvent: (CalendarEvent) -> Unit,
+    onEditEvent: (CalendarEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val now = LocalDateTime.now()
@@ -254,24 +297,22 @@ private fun HeroArea(
                     .fillMaxSize()
                     .padding(horizontal = 16.dp, vertical = 12.dp),
             ) {
-                // 음력 날짜 (최상단 좌측)
-                if (lunarStr.isNotEmpty()) {
-                    Text(
-                        text = lunarStr,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-
-                // 날씨 (음력 우측 정렬)
+                // 음력 날짜 + 날씨 (같은 라인)
                 val dayWeather = state.weekWeatherMap[state.selectedDate] ?: state.weather
-                if (dayWeather != null) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(text = dayWeather.iconEmoji, fontSize = 20.sp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (lunarStr.isNotEmpty()) {
+                        Text(
+                            text = lunarStr,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                    if (dayWeather != null) {
+                        Text(text = dayWeather.iconEmoji, fontSize = 18.sp)
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = dayWeather.displayText,
@@ -299,6 +340,7 @@ private fun HeroArea(
                                 plannerMode = state.plannerMode,
                                 now = now,
                                 onCopyEvent = onCopyEvent,
+                                onEditEvent = onEditEvent,
                             )
                             HorizontalDivider(thickness = 0.5.dp)
                         }
@@ -333,6 +375,7 @@ private fun EventRow(
     plannerMode: PlannerMode,
     now: LocalDateTime,
     onCopyEvent: (CalendarEvent) -> Unit,
+    onEditEvent: (CalendarEvent) -> Unit,
 ) {
     val isOverdue = OverdueChecker.isOverdue(event, plannerMode, now)
     val titleColor = if (isOverdue) MaterialTheme.colorScheme.error
@@ -347,7 +390,7 @@ private fun EventRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .combinedClickable(
-                    onClick = {},
+                    onClick = { onEditEvent(event) },
                     onLongClick = { menuExpanded = true },
                 )
                 .padding(vertical = 8.dp),
@@ -370,10 +413,6 @@ private fun EventRow(
         }
 
         DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-            DropdownMenuItem(
-                text = { Text("편집") },
-                onClick = { menuExpanded = false },
-            )
             DropdownMenuItem(
                 text = { Text("복사 (내용 포함)") },
                 onClick = { menuExpanded = false; onCopyEvent(event) },

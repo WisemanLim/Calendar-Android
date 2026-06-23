@@ -1,5 +1,7 @@
 package com.wisecal.android.logic
 
+import com.wisecal.android.model.CalendarEvent
+import com.wisecal.android.model.PlannerMode
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoField
@@ -87,4 +89,18 @@ object PlannerLogic {
     /** 타이틀에 지원 날짜 패턴 포함 여부. */
     fun hasTitleDatePattern(title: String): Boolean =
         PATTERNS.any { title.contains(it) }
+
+    /**
+     * 저장된 이벤트 내용으로 원래 PlannerMode 추론.
+     * - notes에 todo 체크박스 형식 → TODO
+     * - 종일 이벤트(isAllDay) → DIARY
+     * - 그 외 → PERSONAL_EVENT
+     */
+    fun inferMode(event: CalendarEvent): PlannerMode {
+        val notes = event.notes ?: ""
+        if (notes.lines().any { it.trimStart().startsWith("- [") && it.length >= 5 })
+            return PlannerMode.TODO
+        if (event.isAllDay) return PlannerMode.DIARY
+        return PlannerMode.PERSONAL_EVENT
+    }
 }
