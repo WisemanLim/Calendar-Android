@@ -174,6 +174,7 @@ echo "android.useAndroidX=true" >> gradle.properties
 | impl/12 | AppVersionState (onboarding show condition) · YearNavigationState (year nav · leap-year edge) | DONE | 24/24 PASS |
 | impl/13 | iOS design alignment: onboarding white redesign · hero watermark fix · WeekStrip SUN/SAT colors · MonthGrid card wrap · tab-switch fix · repeat period DatePickerDialog | DONE | — |
 | impl/14 | iOS sync: appointment repeat removed · medication TimePicker+photo · lunar+weather unified line · long-press edit removed · weather emoji iOS-aligned | DONE | — |
+| impl/15 | iOS sync: pull-to-refresh (weather+events) · `[비밀]` appointment opacity 0.25 · FIXED/APPOINTMENT time picker implementation | DONE | — |
 
 ## Architecture
 
@@ -200,7 +201,7 @@ app/src/main/java/com/wisecal/android/
 ├── ui/
 │   ├── CalendarUiState.kt     # UI state (eventsForSelectedDate · monthGrid derived)
 │   ├── CalendarViewModel.kt   # StateFlow ViewModel
-│   ├── MainScreen.kt          # Root composable (Hero + WeekStrip + MonthGrid + list) · schedule list: lunar date + weather (emoji+temperature) in single Row · long-press ContextMenu: copy·delete only (edit removed)
+│   ├── MainScreen.kt          # Root composable (Hero + WeekStrip + MonthGrid + list); PullToRefreshBox (pull-down = weather+events resync); `[비밀]` prefix events alpha 0.25; schedule list: lunar date + weather (emoji+temperature) in single Row; long-press ContextMenu: copy·delete only
 │   ├── theme/
 │   │   └── WiseCalColors.kt   # Rainbow event count colors (7 levels)
 │   ├── components/

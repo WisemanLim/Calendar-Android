@@ -26,6 +26,9 @@ class CalendarViewModel(
     private val _uiState = MutableStateFlow(CalendarUiState())
     val uiState: StateFlow<CalendarUiState> = _uiState.asStateFlow()
 
+    private var lastLatitude: Double = 37.5665
+    private var lastLongitude: Double = 126.9780
+
     init {
         observeSettings()
         loadMonth(_uiState.value.currentMonth)
@@ -64,12 +67,16 @@ class CalendarViewModel(
     }
 
     fun refresh() {
+        _uiState.update { it.copy(isLoading = true) }
         loadMonth(_uiState.value.currentMonth)
+        loadWeather(lastLatitude, lastLongitude)
     }
 
     // ── 날씨 ─────────────────────────────────────────────────────
 
     fun loadWeather(latitude: Double, longitude: Double) {
+        lastLatitude = latitude
+        lastLongitude = longitude
         viewModelScope.launch(ioDispatcher) {
             val currentAsync = async { weatherRepo.getWeather(latitude, longitude) }
             val weeklyAsync  = async { weatherRepo.getWeeklyForecast(latitude, longitude) }

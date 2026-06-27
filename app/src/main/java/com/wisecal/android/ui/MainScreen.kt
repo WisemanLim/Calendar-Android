@@ -36,6 +36,9 @@ import com.wisecal.android.model.CalendarEvent
 import com.wisecal.android.model.PlannerMode
 import com.wisecal.android.ui.components.MonthGrid
 import com.wisecal.android.ui.components.WeekStrip
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.ui.draw.alpha
+import kotlinx.coroutines.delay
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -47,6 +50,7 @@ import java.util.Locale
  * iOS WiseCal 메인화면 대응.
  * 레이아웃: 유틸리티 바 → 월 헤더 → 주간 스트립 → Hero 카드(weight=1) → 미니 달력 카드(하단 고정)
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     viewModel: CalendarViewModel,
@@ -60,6 +64,13 @@ fun MainScreen(
     val state by viewModel.uiState.collectAsState()
     val today = LocalDate.now()
     var heroDrag by remember { mutableFloatStateOf(0f) }
+    var isRefreshing by remember { mutableStateOf(false) }
+    LaunchedEffect(isRefreshing) {
+        if (isRefreshing) {
+            delay(1200L)
+            isRefreshing = false
+        }
+    }
 
     // 위치 권한 → 날씨 로드
     val context = LocalContext.current
@@ -194,25 +205,35 @@ fun MainScreen(
         )
 
         // ── Hero 카드 (남은 공간 모두 차지) ──────────────────────────
-        HeroArea(
-            state = state,
-            onAddEvent = { onAddEvent(state.selectedDate) },
-            onCopyEvent = onCopyEvent,
-            onEditEvent = onEditEvent,
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = {
+                isRefreshing = true
+                viewModel.refresh()
+            },
             modifier = Modifier
                 .weight(1f)
-                .fillMaxWidth()
-                .pointerInput(state.selectedDate) {
-                    detectHorizontalDragGestures(
-                        onDragEnd = {
-                            if (heroDrag < -80f) viewModel.selectDate(state.selectedDate.plusDays(1))
-                            else if (heroDrag > 80f) viewModel.selectDate(state.selectedDate.minusDays(1))
-                            heroDrag = 0f
-                        },
-                        onHorizontalDrag = { _, delta -> heroDrag += delta },
-                    )
-                },
-        )
+                .fillMaxWidth(),
+        ) {
+            HeroArea(
+                state = state,
+                onAddEvent = { onAddEvent(state.selectedDate) },
+                onCopyEvent = onCopyEvent,
+                onEditEvent = onEditEvent,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(state.selectedDate) {
+                        detectHorizontalDragGestures(
+                            onDragEnd = {
+                                if (heroDrag < -80f) viewModel.selectDate(state.selectedDate.plusDays(1))
+                                else if (heroDrag > 80f) viewModel.selectDate(state.selectedDate.minusDays(1))
+                                heroDrag = 0f
+                            },
+                            onHorizontalDrag = { _, delta -> heroDrag += delta },
+                        )
+                    },
+            )
+        }
 
         // ── 하단 미니 달력 카드 (하단 고정) ──────────────────────────
         Surface(
@@ -378,6 +399,7 @@ private fun EventRow(
     onEditEvent: (CalendarEvent) -> Unit,
 ) {
     val isOverdue = OverdueChecker.isOverdue(event, plannerMode, now)
+    val isSecret = event.title.startsWith("[비밀]")
     val titleColor = if (isOverdue) MaterialTheme.colorScheme.error
                      else MaterialTheme.colorScheme.onSurface
     val timeColor = if (isOverdue) MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
@@ -385,7 +407,7 @@ private fun EventRow(
 
     var menuExpanded by remember { mutableStateOf(false) }
 
-    Box {
+    Box(modifier = Modifier.alpha(if (isSecret) 0.25f else 1f)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()

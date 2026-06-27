@@ -189,8 +189,36 @@ fun PersonalEventEditorSection(
                     }
                 }
                 TemplateCategory.FIXED -> {
-                    Text("시작: ${state.startTime.format(timeFormatter)}")
-                    Text("종료: ${state.endTime.format(timeFormatter)}")
+                    var showFixedStartPicker by remember { mutableStateOf(false) }
+                    var showFixedEndPicker by remember { mutableStateOf(false) }
+                    OutlinedButton(onClick = { showFixedStartPicker = true }, modifier = Modifier.fillMaxWidth()) {
+                        Text("시작: ${state.startTime.format(timeFormatter)}")
+                    }
+                    OutlinedButton(onClick = { showFixedEndPicker = true }, modifier = Modifier.fillMaxWidth()) {
+                        Text("종료: ${state.endTime.format(timeFormatter)}")
+                    }
+                    if (showFixedStartPicker) {
+                        MedicationTimePickerDialog(
+                            initialHour = state.startTime.hour,
+                            initialMinute = state.startTime.minute,
+                            onConfirm = { h, m ->
+                                onStartTimeChange(state.startTime.withHour(h).withMinute(m))
+                                showFixedStartPicker = false
+                            },
+                            onDismiss = { showFixedStartPicker = false },
+                        )
+                    }
+                    if (showFixedEndPicker) {
+                        MedicationTimePickerDialog(
+                            initialHour = state.endTime.hour,
+                            initialMinute = state.endTime.minute,
+                            onConfirm = { h, m ->
+                                onEndTimeChange(state.endTime.withHour(h).withMinute(m))
+                                showFixedEndPicker = false
+                            },
+                            onDismiss = { showFixedEndPicker = false },
+                        )
+                    }
                     Spacer(modifier = Modifier.height(8.dp))
                     RepeatSection(
                         state = state,
@@ -203,8 +231,36 @@ fun PersonalEventEditorSection(
                 }
                 else -> {
                     // APPOINTMENT 또는 편집 모드(template = null): 시간 + 장소 표시
-                    Text("시작: ${state.startTime.format(timeFormatter)}")
-                    Text("종료: ${state.endTime.format(timeFormatter)}")
+                    var showApptStartPicker by remember { mutableStateOf(false) }
+                    var showApptEndPicker by remember { mutableStateOf(false) }
+                    OutlinedButton(onClick = { showApptStartPicker = true }, modifier = Modifier.fillMaxWidth()) {
+                        Text("시작: ${state.startTime.format(timeFormatter)}")
+                    }
+                    OutlinedButton(onClick = { showApptEndPicker = true }, modifier = Modifier.fillMaxWidth()) {
+                        Text("종료: ${state.endTime.format(timeFormatter)}")
+                    }
+                    if (showApptStartPicker) {
+                        MedicationTimePickerDialog(
+                            initialHour = state.startTime.hour,
+                            initialMinute = state.startTime.minute,
+                            onConfirm = { h, m ->
+                                onStartTimeChange(state.startTime.withHour(h).withMinute(m))
+                                showApptStartPicker = false
+                            },
+                            onDismiss = { showApptStartPicker = false },
+                        )
+                    }
+                    if (showApptEndPicker) {
+                        MedicationTimePickerDialog(
+                            initialHour = state.endTime.hour,
+                            initialMinute = state.endTime.minute,
+                            onConfirm = { h, m ->
+                                onEndTimeChange(state.endTime.withHour(h).withMinute(m))
+                                showApptEndPicker = false
+                            },
+                            onDismiss = { showApptEndPicker = false },
+                        )
+                    }
                     Spacer(modifier = Modifier.height(4.dp))
                     OutlinedTextField(
                         value = state.location,

@@ -208,6 +208,7 @@ echo "android.useAndroidX=true" >> gradle.properties
 | impl/12 | AppVersionState(온보딩노출조건) · YearNavigationState(연도이동·윤년경계) | DONE | 24/24 PASS |
 | impl/13 | iOS 디자인 일치: 온보딩 화이트 리디자인 · 히어로 워터마크 수정 · WeekStrip SUN/SAT 색상 · MonthGrid 카드 래핑 · 탭 전환 수정 · 반복 기간 DatePickerDialog | DONE | — |
 | impl/14 | iOS 동기화: 약속 반복 제거 · 복용 TimePicker+사진 · 음력+날씨 통합 라인 · 롱프레스 편집 제거 · 날씨 이모지 iOS 동기화 | DONE | — |
+| impl/15 | iOS 동기화: pull-to-refresh(날씨+일정) · `[비밀]` 약속 opacity 0.25 · FIXED/APPOINTMENT 시간 선택기 구현 | DONE | — |
 
 ## 아키텍처
 
@@ -234,7 +235,7 @@ app/src/main/java/com/wisecal/android/
 ├── ui/
 │   ├── CalendarUiState.kt     # UI 상태 (eventsForSelectedDate · monthGrid 파생)
 │   ├── CalendarViewModel.kt   # StateFlow ViewModel
-│   ├── MainScreen.kt          # 루트 컴포저블 (Hero + WeekStrip + MonthGrid + 목록); 일정 목록: 음력+날씨(이모지+온도) 단일 Row 표시; 롱프레스 ContextMenu: 복사·삭제만
+│   ├── MainScreen.kt          # 루트 컴포저블 (Hero + WeekStrip + MonthGrid + 목록); PullToRefreshBox(아래로 당기기=날씨+일정 재동기화); `[비밀]` prefix 이벤트 alpha 0.25; 일정 목록: 음력+날씨(이모지+온도) 단일 Row; 롱프레스 ContextMenu: 복사·삭제만
 │   ├── theme/
 │   │   └── WiseCalColors.kt   # 레인보우 이벤트 수 색상 (7단계)
 │   ├── components/
