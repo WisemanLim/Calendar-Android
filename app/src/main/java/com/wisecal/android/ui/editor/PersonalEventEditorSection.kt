@@ -39,6 +39,7 @@ fun PersonalEventEditorSection(
     onEndTimeChange: (LocalDateTime) -> Unit,
     onLocationChange: (String) -> Unit,
     onRepeatToggle: (Boolean) -> Unit,
+    onIndividualRegistrationChange: (Boolean) -> Unit = {},
     onRepeatFrequencyChange: (RepeatFrequency) -> Unit = {},
     onRepeatDaysOfWeekChange: (Set<DayOfWeek>) -> Unit = {},
     onRepeatStartDateChange: (LocalDate) -> Unit = {},
@@ -152,6 +153,7 @@ fun PersonalEventEditorSection(
                     RepeatSection(
                         state = state,
                         onRepeatToggle = onRepeatToggle,
+                        onIndividualRegistrationChange = onIndividualRegistrationChange,
                         onRepeatFrequencyChange = onRepeatFrequencyChange,
                         onRepeatDaysOfWeekChange = onRepeatDaysOfWeekChange,
                         onRepeatStartDateChange = onRepeatStartDateChange,
@@ -223,6 +225,7 @@ fun PersonalEventEditorSection(
                     RepeatSection(
                         state = state,
                         onRepeatToggle = onRepeatToggle,
+                        onIndividualRegistrationChange = onIndividualRegistrationChange,
                         onRepeatFrequencyChange = onRepeatFrequencyChange,
                         onRepeatDaysOfWeekChange = onRepeatDaysOfWeekChange,
                         onRepeatStartDateChange = onRepeatStartDateChange,
@@ -304,6 +307,7 @@ private val DOW_LABELS = mapOf(
 private fun RepeatSection(
     state: EventEditorState,
     onRepeatToggle: (Boolean) -> Unit,
+    onIndividualRegistrationChange: (Boolean) -> Unit,
     onRepeatFrequencyChange: (RepeatFrequency) -> Unit,
     onRepeatDaysOfWeekChange: (Set<DayOfWeek>) -> Unit,
     onRepeatStartDateChange: (LocalDate) -> Unit,
@@ -324,7 +328,22 @@ private fun RepeatSection(
         }
 
         if (state.repeatEnabled) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    "개별 등록",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.weight(1f),
+                )
+                Switch(
+                    checked = state.individualRegistration,
+                    onCheckedChange = onIndividualRegistrationChange,
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
 
             // 반복 주기 선택: 매일 | 매주 | 매년
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

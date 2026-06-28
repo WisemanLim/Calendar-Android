@@ -45,6 +45,7 @@ data class EventEditorState(
     val selectedCategory: TemplateCategory = TemplateCategory.MEDICATION,
     val selectedTemplate: EventTemplate? = null,
     val repeatEnabled: Boolean = false,
+    val individualRegistration: Boolean = true,
     val repeatFrequency: RepeatFrequency = RepeatFrequency.YEARLY,
     val repeatDaysOfWeek: Set<DayOfWeek> = emptySet(),
     val repeatStartDate: LocalDate = date,
@@ -98,14 +99,17 @@ data class EventEditorState(
             if (mode != PlannerMode.PERSONAL_EVENT) return null
             val tmpl = selectedTemplate ?: return null
             return when (tmpl.category) {
-                TemplateCategory.MEDICATION ->
-                    if (repeatEnabled || !hasTitleDatePattern) buildRrule() else null
+                TemplateCategory.MEDICATION -> when {
+                    repeatEnabled && individualRegistration -> null
+                    repeatEnabled || !hasTitleDatePattern  -> buildRrule()
+                    else                                   -> null
+                }
                 TemplateCategory.APPOINTMENT ->
                     if (!hasTitleDatePattern) buildRrule() else null
                 TemplateCategory.FIXED -> when {
-                    repeatEnabled        -> buildRrule()
-                    !hasTitleDatePattern -> buildRrule()
-                    else                 -> null
+                    repeatEnabled && individualRegistration -> null
+                    repeatEnabled || !hasTitleDatePattern  -> buildRrule()
+                    else                                   -> null
                 }
             }
         }

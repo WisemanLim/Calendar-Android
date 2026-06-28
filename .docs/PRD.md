@@ -148,8 +148,10 @@ eventCountColor(n):
 
   **fixed(고정)**
   - 시작/종료 TimePicker
-  - 반복 토글 + 시작/종료일 DatePicker → yearly RRULE
-  - 구현: `DatePickerDialog` 두 개(시작일·종료일). 상태: `EventEditorState.repeatStartDate` / `repeatEndDate`
+  - 반복 토글 + **개별 등록 토글(기본값: ON)** + 시작/종료일 DatePicker
+    - 개별 등록 ON: `repeatStartDate`~`repeatEndDate` 1일씩 순회, 날짜별 패턴 치환 후 개별 이벤트 저장(RRULE 없음)
+    - 개별 등록 OFF: yearly RRULE 단일 반복 이벤트
+  - 구현: `DatePickerDialog` 두 개(시작일·종료일). 상태: `EventEditorState.repeatStartDate` / `repeatEndDate` / `individualRegistration`
 
 ### 3.5 타이틀 날짜 패턴 치환 (PlannerLogic)
 
@@ -165,6 +167,9 @@ eventCountColor(n):
 | `d###` | `067` (연중 일련일 3자리) |
 
 날짜 패턴 없는 복용(medication) 카테고리 → 저장 시 auto yearly RRULE 적용. 약속(appointment)은 RRULE 미적용.
+
+**반복 + 개별 등록**: `medication`/`fixed` 반복 활성화 + `individualRegistration = true`(기본값) → `repeatStartDate`~`repeatEndDate` 1일씩 순회, 날짜별 패턴 치환 후 개별 이벤트 저장(RRULE 없음). `individualRegistration = false` → 단일 RRULE 반복 이벤트.  
+예: `(d###) [ALG -/-] yyyy-mm-dd` + 2026-07-01~07-02 → `(182) [ALG -/-] 2026-07-01`, `(183) [ALG -/-] 2026-07-02` 각각 개별 등록.
 
 ### 3.6 템플릿 (EventTemplate)
 

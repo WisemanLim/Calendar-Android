@@ -209,6 +209,7 @@ echo "android.useAndroidX=true" >> gradle.properties
 | impl/13 | iOS 디자인 일치: 온보딩 화이트 리디자인 · 히어로 워터마크 수정 · WeekStrip SUN/SAT 색상 · MonthGrid 카드 래핑 · 탭 전환 수정 · 반복 기간 DatePickerDialog | DONE | — |
 | impl/14 | iOS 동기화: 약속 반복 제거 · 복용 TimePicker+사진 · 음력+날씨 통합 라인 · 롱프레스 편집 제거 · 날씨 이모지 iOS 동기화 | DONE | — |
 | impl/15 | iOS 동기화: pull-to-refresh(날씨+일정) · `[비밀]` 약속 opacity 0.25 · FIXED/APPOINTMENT 시간 선택기 구현 | DONE | — |
+| impl/16 | 날짜 패턴(d###/yyyy-mm-dd) 반복 개별등록 버그 수정 · 개별 등록 토글(기본 ON) — 반복+ON→날짜범위 개별, 반복+OFF→RRULE | DONE | — |
 
 ## 아키텍처
 

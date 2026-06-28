@@ -8,6 +8,7 @@ import com.wisecal.android.data.EventImageStore
 import com.wisecal.android.logic.PlannerLogic
 import com.wisecal.android.model.CalendarEvent
 import com.wisecal.android.model.PlannerMode
+import com.wisecal.android.model.TemplateCategory
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -92,21 +93,54 @@ class EventEditorViewModel(
                         location  = s.location.ifBlank { null },
                     )
                 } else {
-                    val eventId = calendarRepo.addEvent(
-                        title      = s.resolvedTitle,
-                        notes      = s.resolvedNotes,
-                        startTime  = startTime,
-                        endTime    = endTime,
-                        isAllDay   = false,
-                        location   = s.location.ifBlank { null },
-                        calendarId = calendarId,
-                        rrule      = s.rrule,
-                    )
-                    if (eventId != null && s.photoUri != null) {
-                        val ts = System.currentTimeMillis()
-                        val dest = EventImageStore.file(appContext.filesDir, eventId, ts)
-                        appContext.contentResolver.openInputStream(s.photoUri)?.use { input ->
-                            dest.outputStream().use { output -> input.copyTo(output) }
+                    val tmpl = s.selectedTemplate
+                    val isDatePatternRepeat = tmpl != null &&
+                        s.repeatEnabled && s.individualRegistration &&
+                        (tmpl.category == TemplateCategory.FIXED || tmpl.category == TemplateCategory.MEDICATION)
+
+                    if (isDatePatternRepeat) {
+                        // 날짜 패턴 + 반복: 각 날짜마다 개별 이벤트 등록 (RRULE 없음)
+                        var cursor = s.repeatStartDate
+                        while (!cursor.isAfter(s.repeatEndDate)) {
+                            val t = PlannerLogic.substituteTitlePatterns(s.title, cursor)
+                            val adjStart = cursor.atTime(s.startTime.toLocalTime())
+                            val adjEnd   = cursor.atTime(s.endTime.toLocalTime())
+                            val eventId = calendarRepo.addEvent(
+                                title      = t,
+                                notes      = s.resolvedNotes,
+                                startTime  = adjStart,
+                                endTime    = adjEnd,
+                                isAllDay   = false,
+                                location   = s.location.ifBlank { null },
+                                calendarId = calendarId,
+                                rrule      = null,
+                            )
+                            if (eventId != null && s.photoUri != null) {
+                                val ts = System.currentTimeMillis()
+                                val dest = EventImageStore.file(appContext.filesDir, eventId, ts)
+                                appContext.contentResolver.openInputStream(s.photoUri)?.use { input ->
+                                    dest.outputStream().use { output -> input.copyTo(output) }
+                                }
+                            }
+                            cursor = cursor.plusDays(1)
+                        }
+                    } else {
+                        val eventId = calendarRepo.addEvent(
+                            title      = s.resolvedTitle,
+                            notes      = s.resolvedNotes,
+                            startTime  = startTime,
+                            endTime    = endTime,
+                            isAllDay   = false,
+                            location   = s.location.ifBlank { null },
+                            calendarId = calendarId,
+                            rrule      = s.rrule,
+                        )
+                        if (eventId != null && s.photoUri != null) {
+                            val ts = System.currentTimeMillis()
+                            val dest = EventImageStore.file(appContext.filesDir, eventId, ts)
+                            appContext.contentResolver.openInputStream(s.photoUri)?.use { input ->
+                                dest.outputStream().use { output -> input.copyTo(output) }
+                            }
                         }
                     }
                 }

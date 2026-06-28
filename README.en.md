@@ -175,6 +175,7 @@ echo "android.useAndroidX=true" >> gradle.properties
 | impl/13 | iOS design alignment: onboarding white redesign · hero watermark fix · WeekStrip SUN/SAT colors · MonthGrid card wrap · tab-switch fix · repeat period DatePickerDialog | DONE | — |
 | impl/14 | iOS sync: appointment repeat removed · medication TimePicker+photo · lunar+weather unified line · long-press edit removed · weather emoji iOS-aligned | DONE | — |
 | impl/15 | iOS sync: pull-to-refresh (weather+events) · `[비밀]` appointment opacity 0.25 · FIXED/APPOINTMENT time picker implementation | DONE | — |
+| impl/16 | Date pattern (d###/yyyy-mm-dd) repeat individual-registration bug fix · Individual registration toggle (default ON) — repeat+ON→per-date individual events, repeat+OFF→RRULE | DONE | — |
 
 ## Architecture
 
